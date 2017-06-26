@@ -12,6 +12,8 @@ public class PubSub {
     
     pub.bind("tcp://*:12345");
     sub.connect("tcp://127.0.0.1:12345");
+    
+    // Eliminate slow subscriber problem
     Thread.sleep(100);
     pub.send("Hello, world!");
     System.out.println("SUB: " + sub.recvStr());
