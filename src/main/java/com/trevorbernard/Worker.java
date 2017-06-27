@@ -27,6 +27,7 @@ public class Worker extends Thread implements Closeable {
   }
 
   public void processMessage(Socket socket) {
+    this.heartBeats = 0;
     // This shouldn't block.. return immediately
     String s = socket.recvStr();
     if (s != null)
@@ -41,7 +42,6 @@ public class Worker extends Thread implements Closeable {
     while (isRunning.get()) {
       this.poller.poll(1000);
       if (poller.pollin(0)) {
-        this.heartBeats = 0;
         processMessage(socket);
       } else {
         System.out.println("TICK MISSED");
