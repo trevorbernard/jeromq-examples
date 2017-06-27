@@ -1,7 +1,7 @@
 package com.trevorbernard;
 
 import java.io.Closeable;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
@@ -10,13 +10,8 @@ import org.zeromq.ZMQ.Socket;
 
 
 // Receives information from the server
-public class Worker extends Thread implements Closeable, OverC {
-  enum State {
-    INIT, RUNNING, ERROR, QUIT
-  }
-
-  private AtomicReference<State> state = new AtomicReference<>(State.INIT);
-
+public class Worker extends Thread implements Closeable {
+  private final AtomicBoolean isRunning = new AtomicBoolean(true);
   private final ZContext context;
   private final String endpoint;
   private final byte[] topic;
@@ -43,7 +38,7 @@ public class Worker extends Thread implements Closeable, OverC {
     init();
     // Fix slow subscriber
     Utils.sleep(100);
-    while (state.get() != State.QUIT) {
+    while (isRunning.get()) {
       this.poller.poll(1000);
       if (poller.pollin(0)) {
         this.heartBeats = 0;
@@ -75,6 +70,7 @@ public class Worker extends Thread implements Closeable, OverC {
 
   private void shutdown() {
     System.out.println("Destroying worker");
+    this.heartBeats = 0;
     if (this.socket != null) {
       this.socket.close();
       this.socket = null;
@@ -83,18 +79,7 @@ public class Worker extends Thread implements Closeable, OverC {
 
   @Override
   public void close() {
-    state.getAndSet(State.QUIT);
+    this.isRunning.set(false);
     Utils.sleep(100);
-  }
-
-  @Override
-  public void onInitialization() {
-    // Send message to socket
-  }
-
-  @Override
-  public void onError(Throwable t) {
-    System.err.println(t);
-    // Send message to socket
   }
 }
