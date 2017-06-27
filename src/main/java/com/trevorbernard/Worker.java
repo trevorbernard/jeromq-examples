@@ -6,11 +6,10 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.zeromq.ZMQ;
 import org.zeromq.ZMQ.Context;
 import org.zeromq.ZMQ.Socket;
-import org.zeromq.ZMsg;
 
 
 // Receives information from the server
-public class Worker implements Runnable, Closeable, OverC {
+public class Worker extends Thread implements Closeable, OverC {
   enum State {
     INIT, RUNNING, ERROR, QUIT
   }
@@ -32,7 +31,7 @@ public class Worker implements Runnable, Closeable, OverC {
   public void processMessage(Socket socket) {
     // This shouldn't block.. return immediately
     String s = socket.recvStr();
-    if(s != null)
+    if (s != null)
       System.out.println("SUB:" + s);
   }
 
@@ -49,12 +48,12 @@ public class Worker implements Runnable, Closeable, OverC {
       processMessage(socket);
     }
     // Good bye
-    destroy();
+    shutdown();
   }
 
   private void init() {
     System.out.println("Initializing worker");
-    destroy();
+    shutdown();
 
     this.socket = context.socket(ZMQ.SUB);
     this.socket.setReceiveTimeOut(0);
@@ -62,7 +61,7 @@ public class Worker implements Runnable, Closeable, OverC {
     this.socket.connect(endpoint);
   }
 
-  private void destroy() {
+  private void shutdown() {
     System.out.println("Destroying worker");
     if (this.socket != null) {
       this.socket.close();
