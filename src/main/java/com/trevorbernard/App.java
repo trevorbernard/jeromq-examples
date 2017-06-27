@@ -1,11 +1,10 @@
 package com.trevorbernard;
 
-import org.zeromq.ZMQ;
-import org.zeromq.ZMQ.Context;
+import org.zeromq.ZContext;
 
 public class App {
   public static void main(String[] args) throws Exception {
-    Context context = ZMQ.context(1);
+    ZContext context = new ZContext();
     String endpoint = "tcp://localhost:7210";
     byte[] topic = "PING:".getBytes();
 

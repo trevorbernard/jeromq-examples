@@ -3,6 +3,7 @@ package com.trevorbernard;
 import java.io.Closeable;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
 import org.zeromq.ZMQ.Context;
 import org.zeromq.ZMQ.Socket;
@@ -16,13 +17,13 @@ public class Worker extends Thread implements Closeable, OverC {
 
   private AtomicReference<State> state = new AtomicReference<>(State.INIT);
 
-  private final Context context;
+  private final ZContext context;
   private final String endpoint;
   private final byte[] topic;
 
   private Socket socket;
 
-  public Worker(Context context, String endpoint, byte[] topic) {
+  public Worker(ZContext context, String endpoint, byte[] topic) {
     this.context = context;
     this.endpoint = endpoint;
     this.topic = topic;
@@ -52,7 +53,7 @@ public class Worker extends Thread implements Closeable, OverC {
     System.out.println("Initializing worker");
     shutdown();
 
-    this.socket = context.socket(ZMQ.SUB);
+    this.socket = context.createSocket(ZMQ.SUB);
     this.socket.setReceiveTimeOut(0);
     this.socket.subscribe(topic);
     this.socket.connect(endpoint);
