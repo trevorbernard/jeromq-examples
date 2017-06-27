@@ -1,5 +1,6 @@
 package com.trevorbernard;
 
+import java.time.Instant;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.zeromq.ZContext;
@@ -35,8 +36,9 @@ class Publisher extends Thread {
       pub.bind("tcp://*:7210");
       while (running.get()) {
         Utils.sleep(1000);
-        System.out.println("PUB:PING");
-        pub.send("A:PING");
+        String msg = "PING:" + Instant.now();
+        System.out.println(msg);
+        pub.send(msg);
       }
     }
   }
