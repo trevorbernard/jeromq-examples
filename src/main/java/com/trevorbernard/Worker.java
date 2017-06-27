@@ -39,10 +39,7 @@ public class Worker extends Thread implements Closeable, OverC {
   public void run() {
     init();
     // Fix slow subscriber
-    try {
-      Thread.sleep(100);
-    } catch (Exception e) {
-    }
+    Utils.sleep(100);
 
     while (state.get() != State.QUIT) {
       processMessage(socket);
@@ -72,10 +69,7 @@ public class Worker extends Thread implements Closeable, OverC {
   @Override
   public void close() {
     state.getAndSet(State.QUIT);
-    try {
-      Thread.sleep(100);
-    } catch (InterruptedException e) {
-    }
+    Utils.sleep(100);
   }
 
   @Override
