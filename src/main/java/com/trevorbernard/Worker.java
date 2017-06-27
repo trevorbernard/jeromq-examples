@@ -5,7 +5,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
-import org.zeromq.ZMQ.Context;
+import org.zeromq.ZMQ.Poller;
 import org.zeromq.ZMQ.Socket;
 
 
@@ -22,6 +22,8 @@ public class Worker extends Thread implements Closeable, OverC {
   private final byte[] topic;
 
   private Socket socket;
+  private Poller poller;
+  private int heartBeats;
 
   public Worker(ZContext context, String endpoint, byte[] topic) {
     this.context = context;
@@ -41,9 +43,18 @@ public class Worker extends Thread implements Closeable, OverC {
     init();
     // Fix slow subscriber
     Utils.sleep(100);
-
     while (state.get() != State.QUIT) {
-      processMessage(socket);
+      this.poller.poll(1000);
+      if (poller.pollin(0)) {
+        this.heartBeats = 0;
+        processMessage(socket);
+      } else {
+        System.out.println("TICK MISSED");
+        if (++this.heartBeats > 3) {
+          System.out.println("CONNECTION TIMEDOUT");
+          init();
+        }
+      }
     }
     // Good bye
     shutdown();
@@ -52,11 +63,14 @@ public class Worker extends Thread implements Closeable, OverC {
   private void init() {
     System.out.println("Initializing worker");
     shutdown();
-
+    this.heartBeats = 0;
     this.socket = context.createSocket(ZMQ.SUB);
     this.socket.setReceiveTimeOut(0);
     this.socket.subscribe(topic);
     this.socket.connect(endpoint);
+
+    this.poller = context.createPoller(1);
+    this.poller.register(this.socket, Poller.POLLIN);
   }
 
   private void shutdown() {
